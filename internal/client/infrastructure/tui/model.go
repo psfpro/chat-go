@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/gofrs/uuid"
-	"log"
 )
 
 type task struct {
@@ -26,11 +25,12 @@ type model struct {
 	descInput      textinput.Model
 	adding         bool
 	addTaskHandler *application.AddTask
+	err            error
 }
 
 func initialModel(addTaskHandler *application.AddTask) model {
 	m := model{
-		list:           list.New([]list.Item{}, list.NewDefaultDelegate(), 50, 20),
+		list:           list.New([]list.Item{}, list.NewDefaultDelegate(), 50, 10),
 		titleInput:     textinput.New(),
 		descInput:      textinput.New(),
 		adding:         false,
@@ -57,6 +57,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.titleInput.Reset()
 				m.descInput.Reset()
 				m.adding = false
+				m.err = nil
 				return m, nil
 			case "enter":
 				if m.adding {
@@ -68,13 +69,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					newTask := task{title: m.titleInput.Value(), description: m.descInput.Value()}
 					id, err := m.addTaskHandler.Handle(newTask.title, newTask.description)
 					if err != nil {
-						log.Println("add task error:", err)
+						m.err = err
+					} else {
+						newTask.id = id
+						m.list.InsertItem(len(m.list.Items())-1, newTask)
+						m.titleInput.Reset()
+						m.descInput.Reset()
+						m.adding = false
+						m.err = nil
 					}
-					newTask.id = id
-					m.list.InsertItem(len(m.list.Items())-1, newTask)
-					m.titleInput.Reset()
-					m.descInput.Reset()
-					m.adding = false
 				}
 				return m, nil
 			}
@@ -106,9 +109,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	if m.adding {
 		return fmt.Sprintf(
-			"Add a new task:\n\n%s\n\n%s\n\n%s",
+			"Add a new task:\n\n%s\n\n%s\n%v\n\n%s",
 			m.titleInput.View(),
 			m.descInput.View(),
+			m.err,
 			"(enter to save, ctrl+c to quit)",
 		)
 	}

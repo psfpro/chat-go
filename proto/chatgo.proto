@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package chatgo;
+
+option go_package = "chatgo/proto";
+
+message Task {
+  string Title = 1;
+  string Description = 2;
+}
+
+message AddTaskRequest {
+  Task task = 1;
+}
+
+message AddTaskResponse {
+  string id = 1;
+  string error = 2;
+}
+
+service ChatGo {
+  rpc AddTask(AddTaskRequest) returns (AddTaskResponse);
+}
