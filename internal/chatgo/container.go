@@ -1,6 +1,10 @@
 package chatgo
 
 import (
+	"chatgo/internal/chatgo/domain"
+	"chatgo/internal/chatgo/infrastructure/agent"
+	"chatgo/internal/chatgo/infrastructure/agent/openai"
+	"chatgo/internal/chatgo/infrastructure/storage"
 	"database/sql"
 	"log"
 
@@ -32,7 +36,16 @@ func NewContainer() *Container {
 		log.Fatal("empty OpenAI API key")
 	}
 
-	app := NewApp()
+	openaiClient := openai.NewClient(config.openAiApiKey)
+	ceo := openai.NewChiefExecutiveOfficer(openaiClient)
+	developer := openai.NewDeveloper(openaiClient)
+	reviewer := openai.NewReviewer(openaiClient)
+	workflow := domain.NewWorkflow(ceo, developer, reviewer, storage.NewFilesystem())
+	agentWorker := agent.NewWorker(workflow)
+
+	//agentWorker.Do(domain.NewTask("Design a simple calculator console application"))
+
+	app := NewApp(agentWorker)
 
 	return &Container{
 		app: app,
