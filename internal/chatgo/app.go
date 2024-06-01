@@ -3,7 +3,11 @@ package chatgo
 import (
 	"chatgo/internal/chatgo/infrastructure/agent"
 	"context"
+	"errors"
+	"google.golang.org/grpc"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,15 +16,30 @@ import (
 
 type App struct {
 	agentWorker *agent.Worker
+	grpcServer  *grpc.Server
 }
 
-func NewApp(agentWorker *agent.Worker) *App {
-	return &App{agentWorker: agentWorker}
+func NewApp(agentWorker *agent.Worker, server *grpc.Server) *App {
+	return &App{agentWorker: agentWorker, grpcServer: server}
 }
 
 func (a *App) Run() {
 	a.agentWorker.Start()
+	a.runGrpcServer()
 	a.waitStopSignal()
+}
+
+func (a *App) runGrpcServer() {
+	go func() {
+		log.Println("Starting gRPC server")
+		listen, err := net.Listen("tcp", ":3200")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := a.grpcServer.Serve(listen); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("gRPC server error: %v", err)
+		}
+	}()
 }
 
 func (a *App) waitStopSignal() {
@@ -36,4 +55,5 @@ func (a *App) waitStopSignal() {
 
 func (a *App) shutdown(_ context.Context) {
 	a.agentWorker.Stop()
+	a.grpcServer.GracefulStop()
 }

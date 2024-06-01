@@ -1,11 +1,15 @@
 package chatgo
 
 import (
+	"chatgo/internal/chatgo/application"
 	"chatgo/internal/chatgo/domain"
 	"chatgo/internal/chatgo/infrastructure/agent"
 	"chatgo/internal/chatgo/infrastructure/agent/openai"
+	grpcApi "chatgo/internal/chatgo/infrastructure/api/grpc"
 	"chatgo/internal/chatgo/infrastructure/storage"
+	"chatgo/proto"
 	"database/sql"
+	"google.golang.org/grpc"
 	"log"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -35,17 +39,19 @@ func NewContainer() *Container {
 	if config.openAiApiKey == "" {
 		log.Fatal("empty OpenAI API key")
 	}
-
+	// Services
 	openaiClient := openai.NewClient(config.openAiApiKey)
 	ceo := openai.NewChiefExecutiveOfficer(openaiClient)
 	developer := openai.NewDeveloper(openaiClient)
 	reviewer := openai.NewReviewer(openaiClient)
 	workflow := domain.NewWorkflow(ceo, developer, reviewer, storage.NewFilesystem())
 	agentWorker := agent.NewWorker(workflow)
+	addTaskHandler := application.NewAddTask(agentWorker)
+	srv := grpcApi.NewChatGoServer(addTaskHandler)
+	grpcServer := grpc.NewServer()
+	proto.RegisterChatGoServer(grpcServer, srv)
 
-	//agentWorker.Do(domain.NewTask("Design a simple calculator console application"))
-
-	app := NewApp(agentWorker)
+	app := NewApp(agentWorker, grpcServer)
 
 	return &Container{
 		app: app,

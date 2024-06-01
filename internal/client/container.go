@@ -2,7 +2,7 @@ package client
 
 import (
 	"chatgo/internal/client/application"
-	"chatgo/internal/client/infrastructure/chatgo/dumb"
+	"chatgo/internal/client/infrastructure/chatgo/grpc"
 	"chatgo/internal/client/infrastructure/storage"
 	"chatgo/internal/client/infrastructure/tui"
 	"log"
@@ -22,7 +22,7 @@ func NewContainer() *Container {
 	// Repositories
 	taskRepository := storage.NewTaskRepository()
 	// Services
-	chatgo := dumb.ChatGoService{}
+	chatgo := grpc.NewChatGoService()
 	addTaskHandler := application.NewAddTask(taskRepository, chatgo)
 	prog := tui.NewProgram(addTaskHandler)
 
