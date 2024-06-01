@@ -1,6 +1,7 @@
 package chatgo
 
 import (
+	"chatgo/internal/chatgo/infrastructure/agent"
 	"context"
 	"log"
 	"os"
@@ -10,13 +11,15 @@ import (
 )
 
 type App struct {
+	agentWorker *agent.Worker
 }
 
-func NewApp() *App {
-	return &App{}
+func NewApp(agentWorker *agent.Worker) *App {
+	return &App{agentWorker: agentWorker}
 }
 
 func (a *App) Run() {
+	a.agentWorker.Start()
 	a.waitStopSignal()
 }
 
@@ -32,5 +35,5 @@ func (a *App) waitStopSignal() {
 }
 
 func (a *App) shutdown(_ context.Context) {
-
+	a.agentWorker.Stop()
 }

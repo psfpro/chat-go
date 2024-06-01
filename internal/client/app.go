@@ -1,6 +1,7 @@
 package client
 
 import (
+	"chatgo/internal/client/infrastructure/tui"
 	"context"
 	"log"
 	"os"
@@ -10,13 +11,18 @@ import (
 )
 
 type App struct {
+	tui *tui.Program
 }
 
-func NewApp() *App {
-	return &App{}
+func NewApp(tui *tui.Program) *App {
+	return &App{tui: tui}
 }
 
 func (a *App) Run() {
+	err := a.tui.Run()
+	if err != nil {
+		log.Fatalf("tui run err: %v", err)
+	}
 	a.waitStopSignal()
 }
 
