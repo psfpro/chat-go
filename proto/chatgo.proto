@@ -4,9 +4,25 @@ package chatgo;
 
 option go_package = "chatgo/proto";
 
+message UserLoginRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message UserRegistrationRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message UserAuthenticationResponse {
+  string accessToken = 1;
+  string refreshToken = 2;
+  string error = 3;
+}
+
 message Task {
-  string Title = 1;
-  string Description = 2;
+  string title = 1;
+  string description = 2;
 }
 
 message AddTaskRequest {
@@ -19,5 +35,7 @@ message AddTaskResponse {
 }
 
 service ChatGo {
+  rpc UserLogin(UserLoginRequest) returns (UserAuthenticationResponse);
+  rpc UserRegistration(UserRegistrationRequest) returns (UserAuthenticationResponse);
   rpc AddTask(AddTaskRequest) returns (AddTaskResponse);
 }
