@@ -4,6 +4,7 @@ import "github.com/gofrs/uuid"
 
 type Task struct {
 	ID                uuid.UUID
+	UserID            uuid.UUID
 	Title             string
 	Description       string
 	State             State
@@ -13,8 +14,8 @@ type Task struct {
 	Iteration         int32
 }
 
-func NewTask(id uuid.UUID, title string, description string) *Task {
-	return &Task{ID: id, Title: title, Description: description, State: StateNewRequest, Files: make(map[string]*File)}
+func NewTask(id uuid.UUID, userID uuid.UUID, title string, description string) *Task {
+	return &Task{ID: id, UserID: userID, Title: title, Description: description, State: StateNewRequest, Files: make(map[string]*File)}
 }
 
 type File struct {

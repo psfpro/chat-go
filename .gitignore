@@ -24,3 +24,6 @@ vendor/
 
 # Output worker tasks
 out/
+
+/config/jwt/private.pem
+/config/jwt/public.pem

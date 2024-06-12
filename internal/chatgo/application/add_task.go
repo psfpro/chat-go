@@ -13,9 +13,9 @@ func NewAddTask(worker Worker) *AddTask {
 	return &AddTask{worker: worker}
 }
 
-func (h AddTask) Handle(title string, description string) (uuid.UUID, error) {
+func (h AddTask) Handle(userID uuid.UUID, title string, description string) (uuid.UUID, error) {
 	id := uuid.Must(uuid.NewV6())
-	task := domain.NewTask(id, title, description)
+	task := domain.NewTask(id, userID, title, description)
 	h.worker.Do(task)
 
 	return id, nil

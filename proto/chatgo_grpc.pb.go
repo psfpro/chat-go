@@ -19,13 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ChatGo_AddTask_FullMethodName = "/chatgo.ChatGo/AddTask"
+	ChatGo_UserLogin_FullMethodName        = "/chatgo.ChatGo/UserLogin"
+	ChatGo_UserRegistration_FullMethodName = "/chatgo.ChatGo/UserRegistration"
+	ChatGo_AddTask_FullMethodName          = "/chatgo.ChatGo/AddTask"
 )
 
 // ChatGoClient is the client API for ChatGo service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatGoClient interface {
+	UserLogin(ctx context.Context, in *UserLoginRequest, opts ...grpc.CallOption) (*UserAuthenticationResponse, error)
+	UserRegistration(ctx context.Context, in *UserRegistrationRequest, opts ...grpc.CallOption) (*UserAuthenticationResponse, error)
 	AddTask(ctx context.Context, in *AddTaskRequest, opts ...grpc.CallOption) (*AddTaskResponse, error)
 }
 
@@ -35,6 +39,24 @@ type chatGoClient struct {
 
 func NewChatGoClient(cc grpc.ClientConnInterface) ChatGoClient {
 	return &chatGoClient{cc}
+}
+
+func (c *chatGoClient) UserLogin(ctx context.Context, in *UserLoginRequest, opts ...grpc.CallOption) (*UserAuthenticationResponse, error) {
+	out := new(UserAuthenticationResponse)
+	err := c.cc.Invoke(ctx, ChatGo_UserLogin_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatGoClient) UserRegistration(ctx context.Context, in *UserRegistrationRequest, opts ...grpc.CallOption) (*UserAuthenticationResponse, error) {
+	out := new(UserAuthenticationResponse)
+	err := c.cc.Invoke(ctx, ChatGo_UserRegistration_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *chatGoClient) AddTask(ctx context.Context, in *AddTaskRequest, opts ...grpc.CallOption) (*AddTaskResponse, error) {
@@ -50,6 +72,8 @@ func (c *chatGoClient) AddTask(ctx context.Context, in *AddTaskRequest, opts ...
 // All implementations must embed UnimplementedChatGoServer
 // for forward compatibility
 type ChatGoServer interface {
+	UserLogin(context.Context, *UserLoginRequest) (*UserAuthenticationResponse, error)
+	UserRegistration(context.Context, *UserRegistrationRequest) (*UserAuthenticationResponse, error)
 	AddTask(context.Context, *AddTaskRequest) (*AddTaskResponse, error)
 	mustEmbedUnimplementedChatGoServer()
 }
@@ -58,6 +82,12 @@ type ChatGoServer interface {
 type UnimplementedChatGoServer struct {
 }
 
+func (UnimplementedChatGoServer) UserLogin(context.Context, *UserLoginRequest) (*UserAuthenticationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserLogin not implemented")
+}
+func (UnimplementedChatGoServer) UserRegistration(context.Context, *UserRegistrationRequest) (*UserAuthenticationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserRegistration not implemented")
+}
 func (UnimplementedChatGoServer) AddTask(context.Context, *AddTaskRequest) (*AddTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddTask not implemented")
 }
@@ -72,6 +102,42 @@ type UnsafeChatGoServer interface {
 
 func RegisterChatGoServer(s grpc.ServiceRegistrar, srv ChatGoServer) {
 	s.RegisterService(&ChatGo_ServiceDesc, srv)
+}
+
+func _ChatGo_UserLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatGoServer).UserLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatGo_UserLogin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatGoServer).UserLogin(ctx, req.(*UserLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatGo_UserRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserRegistrationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatGoServer).UserRegistration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatGo_UserRegistration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatGoServer).UserRegistration(ctx, req.(*UserRegistrationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatGo_AddTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -99,6 +165,14 @@ var ChatGo_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "chatgo.ChatGo",
 	HandlerType: (*ChatGoServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UserLogin",
+			Handler:    _ChatGo_UserLogin_Handler,
+		},
+		{
+			MethodName: "UserRegistration",
+			Handler:    _ChatGo_UserRegistration_Handler,
+		},
 		{
 			MethodName: "AddTask",
 			Handler:    _ChatGo_AddTask_Handler,
