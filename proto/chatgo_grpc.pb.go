@@ -22,6 +22,7 @@ const (
 	ChatGo_UserLogin_FullMethodName        = "/chatgo.ChatGo/UserLogin"
 	ChatGo_UserRegistration_FullMethodName = "/chatgo.ChatGo/UserRegistration"
 	ChatGo_AddTask_FullMethodName          = "/chatgo.ChatGo/AddTask"
+	ChatGo_GetTasks_FullMethodName         = "/chatgo.ChatGo/GetTasks"
 )
 
 // ChatGoClient is the client API for ChatGo service.
@@ -31,6 +32,7 @@ type ChatGoClient interface {
 	UserLogin(ctx context.Context, in *UserLoginRequest, opts ...grpc.CallOption) (*UserAuthenticationResponse, error)
 	UserRegistration(ctx context.Context, in *UserRegistrationRequest, opts ...grpc.CallOption) (*UserAuthenticationResponse, error)
 	AddTask(ctx context.Context, in *AddTaskRequest, opts ...grpc.CallOption) (*AddTaskResponse, error)
+	GetTasks(ctx context.Context, in *GetTasksRequest, opts ...grpc.CallOption) (*GetTasksResponse, error)
 }
 
 type chatGoClient struct {
@@ -68,6 +70,15 @@ func (c *chatGoClient) AddTask(ctx context.Context, in *AddTaskRequest, opts ...
 	return out, nil
 }
 
+func (c *chatGoClient) GetTasks(ctx context.Context, in *GetTasksRequest, opts ...grpc.CallOption) (*GetTasksResponse, error) {
+	out := new(GetTasksResponse)
+	err := c.cc.Invoke(ctx, ChatGo_GetTasks_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatGoServer is the server API for ChatGo service.
 // All implementations must embed UnimplementedChatGoServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type ChatGoServer interface {
 	UserLogin(context.Context, *UserLoginRequest) (*UserAuthenticationResponse, error)
 	UserRegistration(context.Context, *UserRegistrationRequest) (*UserAuthenticationResponse, error)
 	AddTask(context.Context, *AddTaskRequest) (*AddTaskResponse, error)
+	GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error)
 	mustEmbedUnimplementedChatGoServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedChatGoServer) UserRegistration(context.Context, *UserRegistra
 }
 func (UnimplementedChatGoServer) AddTask(context.Context, *AddTaskRequest) (*AddTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddTask not implemented")
+}
+func (UnimplementedChatGoServer) GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTasks not implemented")
 }
 func (UnimplementedChatGoServer) mustEmbedUnimplementedChatGoServer() {}
 
@@ -158,6 +173,24 @@ func _ChatGo_AddTask_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatGo_GetTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTasksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatGoServer).GetTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatGo_GetTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatGoServer).GetTasks(ctx, req.(*GetTasksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatGo_ServiceDesc is the grpc.ServiceDesc for ChatGo service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var ChatGo_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddTask",
 			Handler:    _ChatGo_AddTask_Handler,
+		},
+		{
+			MethodName: "GetTasks",
+			Handler:    _ChatGo_GetTasks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

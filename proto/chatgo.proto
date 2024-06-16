@@ -21,12 +21,15 @@ message UserAuthenticationResponse {
 }
 
 message Task {
-  string title = 1;
-  string description = 2;
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string state = 4;
 }
 
 message AddTaskRequest {
-  Task task = 1;
+  string title = 1;
+  string description = 2;
 }
 
 message AddTaskResponse {
@@ -34,8 +37,16 @@ message AddTaskResponse {
   string error = 2;
 }
 
+message GetTasksRequest {
+}
+
+message GetTasksResponse {
+  repeated Task task = 1;
+}
+
 service ChatGo {
   rpc UserLogin(UserLoginRequest) returns (UserAuthenticationResponse);
   rpc UserRegistration(UserRegistrationRequest) returns (UserAuthenticationResponse);
   rpc AddTask(AddTaskRequest) returns (AddTaskResponse);
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
 }

@@ -48,6 +48,10 @@ func NewContainer() *Container {
 	if err = userRepository.CreateTable(ctx); err != nil {
 		log.Fatalf("create table error: %v", err)
 	}
+	taskRepository := postgres.NewTaskRepository(db)
+	if err = taskRepository.CreateTable(ctx); err != nil {
+		log.Fatalf("create table error: %v", err)
+	}
 	// Services
 	openaiClient := openai.NewClient(config.openAiApiKey)
 	ceo := openai.NewChiefExecutiveOfficer(openaiClient)
@@ -58,8 +62,14 @@ func NewContainer() *Container {
 	authenticationService := authentication.NewService(config.jwtPrivateKey, config.jwtPublicKey)
 	userLoginHandler := application.NewUserLoginHandler(userRepository, authenticationService)
 	userRegistrationHandler := application.NewUserRegistrationHandler(userRepository, authenticationService)
-	addTaskHandler := application.NewAddTask(agentWorker)
-	srv := grpcApi.NewChatGoServer(authenticationService, userLoginHandler, userRegistrationHandler, addTaskHandler)
+	addTaskHandler := application.NewAddTask(agentWorker, taskRepository)
+	srv := grpcApi.NewChatGoServer(
+		authenticationService,
+		userLoginHandler,
+		userRegistrationHandler,
+		addTaskHandler,
+		taskRepository,
+	)
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpcApi.StreamServerInterceptor()),
 		grpc.UnaryInterceptor(grpcApi.UnaryServerInterceptor()),

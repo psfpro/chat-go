@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"chatgo/internal/chatgo/application"
+	"chatgo/internal/chatgo/domain"
 	"chatgo/proto"
 	"context"
 	"github.com/gofrs/uuid"
@@ -18,10 +19,23 @@ type ChatGoServer struct {
 	userLoginHandler        *application.UserLoginHandler
 	userRegistrationHandler *application.UserRegistrationHandler
 	addTaskHandler          *application.AddTask
+	taskRepository          domain.TaskRepository
 }
 
-func NewChatGoServer(authenticationService application.AuthenticationService, userLoginHandler *application.UserLoginHandler, userRegistrationHandler *application.UserRegistrationHandler, addTaskHandler *application.AddTask) *ChatGoServer {
-	return &ChatGoServer{authenticationService: authenticationService, userLoginHandler: userLoginHandler, userRegistrationHandler: userRegistrationHandler, addTaskHandler: addTaskHandler}
+func NewChatGoServer(
+	authenticationService application.AuthenticationService,
+	userLoginHandler *application.UserLoginHandler,
+	userRegistrationHandler *application.UserRegistrationHandler,
+	addTaskHandler *application.AddTask,
+	taskRepository domain.TaskRepository,
+) *ChatGoServer {
+	return &ChatGoServer{
+		authenticationService:   authenticationService,
+		userLoginHandler:        userLoginHandler,
+		userRegistrationHandler: userRegistrationHandler,
+		addTaskHandler:          addTaskHandler,
+		taskRepository:          taskRepository,
+	}
 }
 
 func (s *ChatGoServer) UserLogin(ctx context.Context, in *proto.UserLoginRequest) (*proto.UserAuthenticationResponse, error) {
@@ -63,7 +77,7 @@ func (s *ChatGoServer) AddTask(ctx context.Context, in *proto.AddTaskRequest) (*
 	if err != nil {
 		return nil, err
 	}
-	id, err := s.addTaskHandler.Handle(userID, in.Task.Title, in.Task.Description)
+	id, err := s.addTaskHandler.Handle(ctx, userID, in.Title, in.Description)
 	if err != nil {
 		return &proto.AddTaskResponse{
 			Id:    uuid.Nil.String(),
@@ -74,6 +88,30 @@ func (s *ChatGoServer) AddTask(ctx context.Context, in *proto.AddTaskRequest) (*
 	return &proto.AddTaskResponse{
 		Id:    id.String(),
 		Error: "",
+	}, nil
+}
+
+func (s *ChatGoServer) GetTasks(ctx context.Context, _ *proto.GetTasksRequest) (*proto.GetTasksResponse, error) {
+	userID, err := UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tasks, err := s.taskRepository.GetAllByUserId(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	var res []*proto.Task
+	for _, task := range tasks {
+		res = append(res, &proto.Task{
+			Id:          task.ID.String(),
+			Title:       task.Title,
+			Description: task.Description,
+			State:       string(task.State),
+		})
+	}
+
+	return &proto.GetTasksResponse{
+		Task: res,
 	}, nil
 }
 
